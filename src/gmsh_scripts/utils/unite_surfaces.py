@@ -34,6 +34,7 @@ def rebuild_elements(fl, old_tag, new_tag):
             new_el.clear()
             continue
         if int(l.split()[3]) > old_tag:
+
             new_el.append(l.split()[0] + " ")
             new_el.append(l.split()[1] + " ")
             new_el.append(l.split()[2] + " ")
