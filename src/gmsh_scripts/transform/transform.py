@@ -5,7 +5,7 @@ import numpy as np
 
 from gmsh_scripts.entity.point import Point
 from gmsh_scripts.coordinate_system.coordinate_system import CoordinateSystem, Cartesian, Cylindrical, \
-    Spherical, Toroidal, Tokamak, Block, Path, Affine, Layer, QuarterLayer
+    Spherical, Toroidal, Tokamak, Block, Path, Affine, Layer, QuarterLayer, HalfLayer
 
 from gmsh_scripts.registry import POINT_TOL
 
@@ -495,30 +495,64 @@ class QuarterLayerToCartesian(Transform):
         cs = p.coordinate_system
         px, py, pz = p.coordinates
         n_layers = len(cs.layers[0])
-        lx0, ly0 = (cs.layers[i][0] for i in range(2))
+        lx0, ly0, lnx0, lny0 = (cs.layers[i][0] for i in range(4))
+        # lz0, lnz0 = 0, 0
+        # zs = context.layers[5][::-1] + context.layers[4]
+        # n_zs = len(zs)
+        # zs_curves = context.layers_curves[5][::-1] + context.layers_curves[4]
+        # zs_types = context.layers_types[5][::-1] + context.layers_types[4]
         atol = 10 ** -POINT_TOL
         for j in range(n_layers):
-            lx, ly = (cs.layers[i][j] for i in range(2))
-            n_x, n_y = (cs.layers_curves[i][j][0] for i in range(2))
-            lt_x, lt_y = (cs.layers_types[i][j] for i in range(2))
+            if j == 0:
+                continue
+            lx, ly, lnx, lny = (cs.layers[i][j] for i in range(4))
+            n_x, n_y, n_nx, n_ny = (cs.layers_curves[i][j][0] for i in range(4))
+            lt_x, lt_y, lt_nx, lt_ny = (cs.layers_types[i][j] for i in range(4))
+            # print(lt_x, lt_y, lt_nx, lt_ny)
             if np.isclose(py, ly0, atol=atol) and np.isclose(px, lx, atol=atol):  # I sector X
-                logging.debug('I sector X')
-                py, px = self.update_coordinate(p0=py, pn=px,
-                                                n0=n_y, nn=n_x,
-                                                l00=ly0, l0n=ly,
-                                                ln0=lx0, lnn=lx,
-                                                lt=lt_x)
+                # logging.debug('I sector X')
+                if n_y == 'circle_arc' and n_x == 'circle_arc' and lt_x == 'in':
+                    r = abs(lx)
+                    px = r / 2 ** 0.5 - lx0
+                    py = r / 2 ** 0.5 - ly0
+                else:
+                    px = lx - lx0
+                    py = ly - ly0
                 break
             elif np.isclose(px, lx0, atol=atol) and np.isclose(py, ly, atol=atol):  # I sector Y
-                logging.debug('I sector Y')
-                px, py = self.update_coordinate(p0=px, pn=py,
-                                                n0=n_x, nn=n_y,
-                                                l00=lx0, l0n=lx,
-                                                ln0=ly0, lnn=ly,
-                                                lt=lt_y)
+                # logging.debug('I sector Y')
+                if n_x == 'circle_arc' and n_y == 'circle_arc' and lt_y == 'in':
+                    r = abs(ly)
+                    px = r / 2 ** 0.5 - lx0
+                    py = r / 2 ** 0.5 - ly0
+                else:
+                    px = lx - lx0
+                    py = ly - ly0
+                break
+            elif np.isclose(px, lnx0, atol=atol) and np.isclose(py, ly, atol=atol):  # II sector Y
+                # logging.debug('II sector Y')
+                py = ly - ly0
+                break
+            elif np.isclose(py, ly0, atol=atol) and np.isclose(px, lnx, atol=atol):  # II sector X
+                # logging.debug('II sector NX')
+                break
+            elif np.isclose(py, lny0, atol=atol) and np.isclose(px, lnx, atol=atol):  # III sector X
+                # logging.debug('III sector NX')
+                break
+            elif np.isclose(px, lnx0, atol=atol) and np.isclose(py, lny, atol=atol):  # III sector Y
+                # logging.debug('III sector NY')
+                break
+            elif np.isclose(px, lx0, atol=atol) and np.isclose(py, lny, atol=atol):  # IV sector Y
+                # logging.debug('IV sector NY')
+                break
+            elif np.isclose(py, lny0, atol=atol) and np.isclose(px, lx, atol=atol):  # IV sector X
+                # logging.debug('IV sector X')
+                px = lx - lx0
                 break
             else:
                 continue
+        px -= lnx0
+        py -= lny0
         p.coordinates = np.array([px, py, pz]) + cs.origin
         p.coordinate_system = self.cs_to
         return p
@@ -527,11 +561,107 @@ class QuarterLayerToCartesian(Transform):
     def update_coordinate(p0, pn, n0, nn, l00, l0n, ln0, lnn, lt):
         if n0 == 'circle_arc' and nn == 'circle_arc' and lt == 'in':
             r = abs(pn)  # radius
-            p0 = np.sign(p0) * r / 2 ** 0.5
-            pn = np.sign(pn) * r / 2 ** 0.5
+            p0 = np.sign(p0) * r / 2 ** 0.5 - l0n
+            pn = np.sign(pn) * r / 2 ** 0.5 - l00
         else:
             p0 = l0n
         return p0, pn
+
+
+class HalfLayerToCartesian(Transform):
+    def __init__(self, **kwargs):
+        super().__init__(cs_to=Cartesian(), **kwargs)
+
+    def __call__(self, p):
+        p = super().__call__(p)
+        if isinstance(p.coordinate_system, type(self.cs_to)):
+            return p
+        if not isinstance(p.coordinate_system, HalfLayer):
+            return p
+        cs = p.coordinate_system
+        px, py, pz = p.coordinates
+        n_layers = len(cs.layers[0])
+        lx0, ly0, lnx0, lny0 = (cs.layers[i][0] for i in range(4))
+        # lz0, lnz0 = 0, 0
+        # zs = context.layers[5][::-1] + context.layers[4]
+        # n_zs = len(zs)
+        # zs_curves = context.layers_curves[5][::-1] + context.layers_curves[4]
+        # zs_types = context.layers_types[5][::-1] + context.layers_types[4]
+        atol = 10 ** -POINT_TOL
+        for j in range(n_layers):
+            if j == 0:
+                lx, ly, lnx, lny = (cs.layers[i][j] for i in range(4))
+                if np.isclose(py, ly0, atol=atol) and np.isclose(px, lx, atol=atol):  # I sector X
+                    py = ly - ly0
+                elif np.isclose(px, lnx0, atol=atol) and np.isclose(py, ly, atol=atol):  # II sector Y
+                    py = ly - ly0
+                continue
+            lx, ly, lnx, lny = (cs.layers[i][j] for i in range(4))
+            n_x, n_y, n_nx, n_ny = (cs.layers_curves[i][j][0] for i in range(4))
+            lt_x, lt_y, lt_nx, lt_ny = (cs.layers_types[i][j] for i in range(4))
+            # print(lt_x, lt_y, lt_nx, lt_ny)
+            if np.isclose(py, ly0, atol=atol) and np.isclose(px, lx, atol=atol):  # I sector X
+                # logging.debug('I sector X')
+                if n_y == 'circle_arc' and n_x == 'circle_arc' and lt_x == 'in':
+                    r = abs(lx)
+                    px = r / 2 ** 0.5
+                    py = r / 2 ** 0.5 - ly0
+                else:
+                    px = lx
+                    py = ly - ly0
+                break
+            elif np.isclose(px, lx0, atol=atol) and np.isclose(py, ly, atol=atol):  # I sector Y
+                # logging.debug('I sector Y')
+                if n_x == 'circle_arc' and n_y == 'circle_arc' and lt_y == 'in':
+                    r = abs(ly)
+                    px = r / 2 ** 0.5
+                    py = r / 2 ** 0.5 - ly0
+                else:
+                    px = lx
+                    py = ly - ly0
+                break
+            elif np.isclose(px, lnx0, atol=atol) and np.isclose(py, ly, atol=atol):  # II sector Y
+                # logging.debug('II sector Y')
+                # py = ly - ly0
+                if n_y == 'circle_arc' and n_x == 'circle_arc' and lt_x == 'in':
+                    r = abs(lx)
+                    px = -(r / 2 ** 0.5)
+                    py = r / 2 ** 0.5 - ly0
+                else:
+                    px = -lx
+                    py = ly - ly0
+                break
+            elif np.isclose(py, ly0, atol=atol) and np.isclose(px, lnx, atol=atol):  # II sector X
+                # logging.debug('II sector NX')
+                if n_y == 'circle_arc' and n_x == 'circle_arc' and lt_x == 'in':
+                    r = abs(lx)
+                    px = -(r / 2 ** 0.5)
+                    py = r / 2 ** 0.5 - ly0
+                else:
+                    px = -lx
+                    py = ly - ly0
+                break
+            elif np.isclose(py, lny0, atol=atol) and np.isclose(px, lnx, atol=atol):  # III sector X
+                # logging.debug('III sector NX')
+                px = -lx
+                break
+            elif np.isclose(px, lnx0, atol=atol) and np.isclose(py, lny, atol=atol):  # III sector Y
+                # logging.debug('III sector NY')
+                break
+            elif np.isclose(px, lx0, atol=atol) and np.isclose(py, lny, atol=atol):  # IV sector Y
+                # logging.debug('IV sector NY')
+                break
+            elif np.isclose(py, lny0, atol=atol) and np.isclose(px, lx, atol=atol):  # IV sector X
+                # logging.debug('IV sector X')
+                px = lx
+                break
+            else:
+                continue
+        # px -= lnx0
+        py -= lny0
+        p.coordinates = np.array([px, py, pz]) + cs.origin
+        p.coordinate_system = self.cs_to
+        return p
 
 
 class AnyAsSome(Transform):
@@ -619,5 +749,6 @@ str2obj = {
     AnyAsSome.__name__: AnyAsSome,
     CartesianToCartesianByBlock.__name__: CartesianToCartesianByBlock,
     QuarterLayerToCartesian.__name__: QuarterLayerToCartesian,
-    TransformationMatrix.__name__: TransformationMatrix
+    TransformationMatrix.__name__: TransformationMatrix,
+    HalfLayerToCartesian.__name__: HalfLayerToCartesian,
 }

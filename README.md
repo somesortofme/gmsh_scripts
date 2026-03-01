@@ -16,7 +16,7 @@ with boolean operations based on [gmsh](https://gmsh.info/)
 ```shell
 pip install gmsh-scripts
 ```
-4. Create or [download](https://github.com/romanzes637/gmsh_scripts/blob/master/examples/matrix/matrix.json) input file
+3. Create or [download](https://github.com/romanzes637/gmsh_scripts/blob/master/examples/matrix/matrix.json) input file
 ```json
 {
   "metadata": {
@@ -64,6 +64,9 @@ python -m gmsh_scripts all_heater_plug.json
 
 ### Plot tree
 ```shell
+pin install gmsh_scripts[viz]
+```
+```shell
 python -m gmsh_scripts all_heater_plug.json --plot
 ```
 <img alt="Experiment tree" src="/images/sweden_experiment_tree.png" width="400" height="400">
@@ -90,6 +93,27 @@ python -m gmsh_scripts all_heater_plug.json --plot
 </a>
 <a href="https://github.com/romanzes637/gmsh_scripts/tree/master/examples/matrix/cross_section_2">
 <img alt="Cross section 2" src="https://github.com/romanzes637/gmsh_scripts/blob/master/images/cross_section_2.png" width="200" height="200">
+</a>
+<a href="https://github.com/romanzes637/gmsh_scripts/tree/master/examples/cylinder/core.yaml">
+<img alt="Core" src="https://github.com/romanzes637/gmsh_scripts/blob/master/images/core.png" width="200" height="200">
+</a>
+<a href="https://github.com/romanzes637/gmsh_scripts/tree/master/examples/quarter_layer/simple.yaml">
+<img alt="Quarter layer" src="https://github.com/romanzes637/gmsh_scripts/blob/master/images/simple_quarter_layer.png" width="200" height="200">
+</a>
+<a href="https://github.com/romanzes637/gmsh_scripts/tree/master/examples/quarter_layer_with_holes/main.yaml">
+<img alt="Quarter layer with holes" src="https://github.com/romanzes637/gmsh_scripts/blob/master/images/quarter_layer_with_holes.png" width="200" height="200">
+</a>
+<a href="https://github.com/romanzes637/gmsh_scripts/tree/master/examples/matrix/large_matrix.yaml">
+<img alt="Large Matrix" src="https://github.com/romanzes637/gmsh_scripts/blob/master/images/large_matrix.png" width="200" height="200">
+</a>
+<a href="https://github.com/romanzes637/gmsh_scripts/tree/master/examples/block/custom_block.yaml">
+<img alt="Custom Block" src="https://github.com/romanzes637/gmsh_scripts/blob/master/images/custom_block.png" width="200" height="200">
+</a>
+<a href="https://github.com/romanzes637/gmsh_scripts/tree/master/examples/half_layer/simple.yaml">
+<img alt="Half layer" src="https://github.com/romanzes637/gmsh_scripts/blob/master/images/simple_half_layer.png" width="200" height="200">
+</a>
+<a href="https://github.com/romanzes637/gmsh_scripts/tree/master/examples/half_layer_with_holes/main.yaml">
+<img alt="Half layer with holes" src="https://github.com/romanzes637/gmsh_scripts/blob/master/images/half_layer_with_holes.png" width="200" height="200">
 </a>
 
 ## [Examples album](https://photos.app.goo.gl/KngvSr6ttbyIdFEX2)
